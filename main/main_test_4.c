@@ -26,10 +26,10 @@
 #define MOTOR_ENABLE    13
 
 #define MIN_PID         1
-#define MAX_PID         4000
+#define MAX_PID         3000
 
 #define MIN_DELAY       700
-#define MAX_DELAY       5000
+#define MAX_DELAY       5500
 
 static const char *TAG = "main";
 
@@ -38,7 +38,7 @@ const double setpoint = 89.30;
 double input = 0.0;
 double output = 0.0;
 int step_delay = 0;
-    double Kp = 100.0, Ki = 0.0, Kd = 22;
+double Kp = 90.0, Ki = 0.0, Kd = 0.0;
 double previous_angle = setpoint;
 
 double lastError = 0.0;
@@ -61,7 +61,7 @@ void i2c_master_init() {
 }
 
 // median filter package
-#define MEDIAN_WINDOW_SIZE 11
+#define MEDIAN_WINDOW_SIZE 21
 #define SPIKE_THRESHOLD 5.0f  // Adjust based on real-world behavior
 
 float angle_buffer[MEDIAN_WINDOW_SIZE] = {0};
@@ -127,9 +127,8 @@ void stop_motor() {
 
 void stepper_task(void *arg) {
 
-        gpio_set_level(MOTOR_ENABLE, 0);
-
     while (1) {
+        gpio_set_level(MOTOR_ENABLE, 0);
         // Check if PID output is greater than zero (non-zero movement)
         if (abs(pid_output) > 0) {
             // Set the direction based on PID output (positive or negative)
@@ -138,8 +137,9 @@ void stepper_task(void *arg) {
             // Calculate the delay based on PID output
             step_delay = pid_to_delay(pid_output);
 
-            if (step_delay > MAX_DELAY) {
+            if (step_delay > (MAX_DELAY-400)) {
                 stop_motor();
+                continue;
             }
 
             if (step_delay < MIN_DELAY) {
