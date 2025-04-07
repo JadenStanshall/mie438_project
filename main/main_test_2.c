@@ -11,7 +11,7 @@
 #define MS2_PIN     14
 #define MS3_PIN     27
 
-#define DELAY_US    600
+#define DELAY_US    700
 // min speed = 5500
 // max speed = 800
 

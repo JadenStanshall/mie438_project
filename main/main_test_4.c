@@ -23,7 +23,9 @@
 #define MS2_PIN         14
 #define MS3_PIN         27
 
-#define MIN_PID         100
+#define MOTOR_ENABLE    13
+
+#define MIN_PID         1
 #define MAX_PID         4000
 
 #define MIN_DELAY       700
@@ -36,7 +38,7 @@ const double setpoint = 89.30;
 double input = 0.0;
 double output = 0.0;
 int step_delay = 0;
-double Kp = 350.0, Ki = 0.0, Kd = 0.0;
+    double Kp = 100.0, Ki = 0.0, Kd = 22;
 double previous_angle = setpoint;
 
 double lastError = 0.0;
@@ -118,25 +120,38 @@ int pid_to_delay(double pid_output){
     return (int)delay;
 }
 
+
+void stop_motor() {
+    gpio_set_level(MOTOR_ENABLE, 1); // Assuming 1 disables the motor (active low logic)
+}
+
 void stepper_task(void *arg) {
+
+        gpio_set_level(MOTOR_ENABLE, 0);
+
     while (1) {
+        // Check if PID output is greater than zero (non-zero movement)
         if (abs(pid_output) > 0) {
-            gpio_set_level(DIR_PIN, pid_output > 0 ? 0 : 1);
+            // Set the direction based on PID output (positive or negative)
+            gpio_set_level(DIR_PIN, pid_output > 0 ? 1 : 0);
         
-        step_delay = pid_to_delay(pid_output);
+            // Calculate the delay based on PID output
+            step_delay = pid_to_delay(pid_output);
 
-        if (step_delay > MAX_DELAY){
-            step_delay = MAX_DELAY;
-        }
+            if (step_delay > MAX_DELAY) {
+                stop_motor();
+            }
 
-        if (step_delay < MIN_DELAY){
-            step_delay = MIN_DELAY;
-        }
+            if (step_delay < MIN_DELAY) {
+                // Stop motor if the delay is below the minimum
+                step_delay = MIN_DELAY;
+            }
 
-        gpio_set_level(STEP_PIN, 1);
-        esp_rom_delay_us(step_delay);
-        gpio_set_level(STEP_PIN, 0);
-        esp_rom_delay_us(step_delay);
+            // Generate the step pulse for the stepper motor
+            gpio_set_level(STEP_PIN, 1);
+            esp_rom_delay_us(step_delay);
+            gpio_set_level(STEP_PIN, 0);
+            esp_rom_delay_us(step_delay);
         }
     }
 }
@@ -168,7 +183,7 @@ void app_main() {
     mpu6050_init();
 
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << DIR_PIN) | (1ULL << STEP_PIN) | (1ULL << MS1_PIN) | (1ULL << MS2_PIN) | (1ULL << MS3_PIN),
+        .pin_bit_mask = (1ULL << DIR_PIN) | (1ULL << STEP_PIN) | (1ULL << MS1_PIN) | (1ULL << MS2_PIN) | (1ULL << MS3_PIN) | (1ULL << MOTOR_ENABLE),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
