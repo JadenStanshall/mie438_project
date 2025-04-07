@@ -23,23 +23,21 @@
 #define MS2_PIN         14
 #define MS3_PIN         27
 
-#define MIN_PID         150
-#define MAX_PID         10000
+#define MIN_PID         100
+#define MAX_PID         4000
 
-#define MIN_DELAY       1400
-#define MAX_DELAY       5700
-
-#define JUMP_THRESH     20
+#define MIN_DELAY       700
+#define MAX_DELAY       5000
 
 static const char *TAG = "main";
 
 // PID parameters
-double setpoint = 6.0;
+const double setpoint = 89.30;
 double input = 0.0;
 double output = 0.0;
 int step_delay = 0;
-double Kp = 400.0, Ki = 0.0, Kd = 0.0;
-double previous_angle = 123.456;
+double Kp = 350.0, Ki = 0.0, Kd = 0.0;
+double previous_angle = setpoint;
 
 double lastError = 0.0;
 double integral = 0.0;
@@ -61,8 +59,8 @@ void i2c_master_init() {
 }
 
 // median filter package
-#define MEDIAN_WINDOW_SIZE 1
-#define SPIKE_THRESHOLD 20.0f  // Adjust based on real-world behavior
+#define MEDIAN_WINDOW_SIZE 11
+#define SPIKE_THRESHOLD 5.0f  // Adjust based on real-world behavior
 
 float angle_buffer[MEDIAN_WINDOW_SIZE] = {0};
 int angle_index = 0;
@@ -123,9 +121,17 @@ int pid_to_delay(double pid_output){
 void stepper_task(void *arg) {
     while (1) {
         if (abs(pid_output) > 0) {
-            gpio_set_level(DIR_PIN, pid_output > 0 ? 1 : 0);
+            gpio_set_level(DIR_PIN, pid_output > 0 ? 0 : 1);
         
         step_delay = pid_to_delay(pid_output);
+
+        if (step_delay > MAX_DELAY){
+            step_delay = MAX_DELAY;
+        }
+
+        if (step_delay < MIN_DELAY){
+            step_delay = MIN_DELAY;
+        }
 
         gpio_set_level(STEP_PIN, 1);
         esp_rom_delay_us(step_delay);
@@ -143,18 +149,16 @@ void pid_task(void *arg) {
         angle_buffer[angle_index] = raw_angle;
         angle_index = (angle_index + 1) % MEDIAN_WINDOW_SIZE;
 
+        if (fabs(raw_angle - previous_angle) > SPIKE_THRESHOLD){
+            raw_angle = previous_angle;
+        }
+
         // Compute median
         double filtered_angle = get_median(angle_buffer, MEDIAN_WINDOW_SIZE);
 
-        // Optional: Spike rejection after filtering (useful if sensor is really jumpy)
-        if (previous_angle != 123.456) {
-            if (fabs(previous_angle - filtered_angle) > SPIKE_THRESHOLD) {
-                filtered_angle = previous_angle;
-            }
-        }
         previous_angle = filtered_angle;
-        pid_update(raw_angle);
-        ESP_LOGI(TAG, "Angle: %.2f, PID Output: %d, Delay: %d", filtered_angle, pid_output, step_delay);
+        pid_update(filtered_angle);
+        ESP_LOGI(TAG, "Raw_angle: %.2f, Angle: %.2f, PID Output: %d, Delay: %d", raw_angle, filtered_angle, pid_output, step_delay);
         vTaskDelay(pdMS_TO_TICKS(15));
     }
 }
@@ -174,7 +178,7 @@ void app_main() {
     gpio_config(&io_conf);
     
     // config half step
-    gpio_set_level(MS1_PIN, 0);
+    gpio_set_level(MS1_PIN, 1);
     gpio_set_level(MS2_PIN, 0);
     gpio_set_level(MS3_PIN, 0);
     

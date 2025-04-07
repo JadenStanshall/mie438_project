@@ -11,11 +11,11 @@
 #define MS2_PIN     14
 #define MS3_PIN     27
 
-#define DELAY_US    5500
+#define DELAY_US    600
 // min speed = 5500
 // max speed = 800
 
-#define STEPS_PER_REV 200 // full = 200, half = 400
+#define STEPS_PER_REV 400 // full = 200, half = 400
 
 static const char *TAG = "STEPPER_TEST";
 
@@ -31,7 +31,7 @@ void app_main(void)
     gpio_config(&io_conf);
 
     // config half step
-    gpio_set_level(MS1_PIN, 0);
+    gpio_set_level(MS1_PIN, 1);
     gpio_set_level(MS2_PIN, 0);
     gpio_set_level(MS3_PIN, 0);
 
