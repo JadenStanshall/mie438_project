@@ -148,6 +148,11 @@ float kalman_update(KalmanFilter *kf, float measurement)
 
 KalmanFilter angle_filter;
 
+bool sameSign(int a, int b)
+{
+    return (a >= 0 && b >= 0) || (a < 0 && b < 0);
+}
+
 void pid_update(double current_angle)
 {
     double error = setpoint - current_angle;
@@ -182,11 +187,6 @@ void pid_update(double current_angle)
 
     lastError = error;
     pid_output = output;
-}
-
-bool sameSign(int a, int b)
-{
-    return (a >= 0 && b >= 0) || (a < 0 && b < 0);
 }
 
 int pid_to_delay(double pid_output)
