@@ -1,5 +1,6 @@
 ESP-IDF template app
 ====================
+# LOOK AT *good_jawn.c* for our main.c
 
 This is a template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
 
