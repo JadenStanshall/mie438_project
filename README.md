@@ -4,7 +4,7 @@ MIE438 Project
 This project was built and submitted as part of mie438: microprocessors and embedded microcontrollers in the third year of engsci robo.
 
 - we solve the classic inverted pendulum problem using an imu sensor and pid controller
-- the system is built on the esp platform and used the esp-idf for development (we just forked the template lol)
+- the system is built on the esp platform and used the esp-idf for development (we just forked the template)
 
 # ESP-IDF template app
 
