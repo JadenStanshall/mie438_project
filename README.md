@@ -1,5 +1,6 @@
 MIE438 Project
 ====================
+# LOOK AT *good_jawn.c* for our main.c
 
 This project was built and submitted as part of mie438: microprocessors and embedded microcontrollers in the third year of engsci robo.
 
